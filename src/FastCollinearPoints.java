@@ -31,12 +31,12 @@ public class FastCollinearPoints {
         }
 
         Point[] aux = new Point[a.length];
-        for (int lo = 0; lo < a.length - 3; lo++)
+        for (int i = 0; i < a.length; i++)
         {
-            Point p = a[lo];
+            Point p = a[i];
 
-            Point[] copy = new Point[a.length - lo - 1];
-            for (int i = lo + 1, j = 0; i < a.length; i++, j++) copy[j] = a[i];
+            Point[] copy = new Point[a.length];
+            for (int j = 0; j < a.length; j++) copy[j] = a[j];
 
             sort(copy, aux, 0, copy.length - 1, p.slopeOrder());
 
@@ -45,36 +45,32 @@ public class FastCollinearPoints {
 //                System.out.println(copy[i] + " " + p.slopeTo(copy[i]));
 
             // pass over sorted array to get largest line greater than 4 points
-            Double slope = null;
+            if (copy.length == 0) break;
+            double slope = p.slopeTo(copy[0]);;
+            Point min = p.compareTo(copy[0]) < 0 ? p : copy[0];
+            Point max = p.compareTo(copy[0]) > 0 ? p : copy[0];
             int count = 1;
 
             for (int j = 0; j < copy.length; j++) {
-                if (slope == null)
-                    slope = p.slopeTo(copy[j]);
-                else if (Double.compare(slope, p.slopeTo(copy[j])) == 0) {
+                if (Double.compare(slope, p.slopeTo(copy[j])) == 0) {
+                    min = min.compareTo(copy[j]) < 0 ? min : copy[j];
+                    max = max.compareTo(copy[j]) > 0 ? max : copy[j];
                     count++;
                 } else {
                     if (count >= 3) {
-                        // what if the line segment we found was already found
-                        // this is only true if one of the previous points also gives same slope
-                        boolean addIt = true;
-                        for (int i = 0; i < lo; i++) {
-                            if (Double.compare(p.slopeTo(a[i]), slope) == 0)
-                            {
-                                addIt = false;
-                                break;
-                            }
-                        }
-                        if (addIt)
-                            segs.add(new LineSegment(p, copy[j - 1]));
+                        if (p.compareTo(min) == 0)
+                            segs.add(new LineSegment(min, max));
                     }
                     count = 1;
+                    min = p.compareTo(copy[j]) < 0 ? p : copy[j];
+                    max = p.compareTo(copy[j]) > 0 ? p : copy[j];
                     slope = p.slopeTo(copy[j]);
                 }
             }
 
             if (count >= 3) {
-                segs.add(new LineSegment(p, copy[copy.length - 1]));
+                if (p.compareTo(min) == 0)
+                    segs.add(new LineSegment(min, max));
             }
         }
 
@@ -101,7 +97,7 @@ public class FastCollinearPoints {
         }
     }
 
-    private static void sort(Point[] a, Point[] aux, int lo, int hi, Comparator c)
+    private static void sort(Point[] a, Point[] aux, int lo, int hi, Comparator<Point> c)
     {
         if (hi <= lo) return;
         int mid = lo + (hi - lo) / 2;
